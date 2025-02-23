@@ -26,7 +26,7 @@
  */
 
 // If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
+if (! defined('WPINC')) {
 	die;
 }
 
@@ -35,14 +35,15 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'DOCKLINE_SUITE_VERSION', '1.0.0' );
+define('DOCKLINE_SUITE_VERSION', '1.0.1');
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-dockline-suite-activator.php
  */
-function activate_dockline_suite() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-dockline-suite-activator.php';
+function activate_dockline_suite()
+{
+	require_once plugin_dir_path(__FILE__) . 'includes/class-dockline-suite-activator.php';
 	Dockline_Suite_Activator::activate();
 }
 
@@ -50,19 +51,25 @@ function activate_dockline_suite() {
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-dockline-suite-deactivator.php
  */
-function deactivate_dockline_suite() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-dockline-suite-deactivator.php';
+function deactivate_dockline_suite()
+{
+	require_once plugin_dir_path(__FILE__) . 'includes/class-dockline-suite-deactivator.php';
 	Dockline_Suite_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_dockline_suite' );
-register_deactivation_hook( __FILE__, 'deactivate_dockline_suite' );
+register_activation_hook(__FILE__, 'activate_dockline_suite');
+register_deactivation_hook(__FILE__, 'deactivate_dockline_suite');
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-dockline-suite.php';
+require plugin_dir_path(__FILE__) . 'includes/class-dockline-suite.php';
+
+/**
+ * GitHub integration for version control and updates.
+ */
+require plugin_dir_path(__FILE__) . 'includes/class-dockline-suite-github.php';
 
 /**
  * Begins execution of the plugin.
@@ -73,10 +80,45 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-dockline-suite.php';
  *
  * @since    1.0.0
  */
-function run_dockline_suite() {
+function run_dockline_suite()
+{
 
 	$plugin = new Dockline_Suite();
 	$plugin->run();
 
+	// Check for updates on plugin load
+	$github = new Dockline_Suite_GitHub('TheDockLine', 'dockline-suite');
+	$update_info = $github->check_for_updates();
+
+	if ($update_info && version_compare(DOCKLINE_SUITE_VERSION, $update_info['version'], '<')) {
+		add_action('admin_notices', function () use ($update_info) {
+			echo '<div class="notice notice-warning is-dismissible"><p>An update is available for Dockline Suite. Current version: ' . DOCKLINE_SUITE_VERSION . ', Latest version: ' . $update_info['version'] . '. <a href="' . admin_url('plugins.php?update-plugin=dockline-suite') . '">Update now</a></p></div>';
+		});
+
+		// Add update link to plugins page
+		add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links) use ($update_info) {
+			$links[] = '<a href="' . admin_url('plugins.php?update-plugin=dockline-suite') . '">Update to ' . $update_info['version'] . '</a>';
+			return $links;
+		});
+
+		// Handle update when clicked
+		if (isset($_GET['update-plugin']) && $_GET['update-plugin'] === 'dockline-suite') {
+			if ($github->update_plugin($update_info['download_url'])) {
+				wp_redirect(admin_url('plugins.php?plugin-updated=true'));
+				exit;
+			} else {
+				add_action('admin_notices', function () {
+					echo '<div class="notice notice-error is-dismissible"><p>Failed to update Dockline Suite. Please try again later.</p></div>';
+				});
+			}
+		}
+	}
+
+	// Show success message after update
+	if (isset($_GET['plugin-updated']) && $_GET['plugin-updated'] === 'true') {
+		add_action('admin_notices', function () {
+			echo '<div class="notice notice-success is-dismissible"><p>Dockline Suite has been successfully updated.</p></div>';
+		});
+	}
 }
 run_dockline_suite();
