@@ -79,41 +79,29 @@ class Dockline_Suite_GitHub_Updater
         }
 
         $res = new stdClass();
-        $version = ltrim($remote['tag_name'], 'v');
-
-        //  $res->name = $remote->name;
-        //  $res->slug = $remote->slug;
-        //  $res->version = $remote->version;
-        //  $res->tested = $remote->tested;
-        //  $res->requires = $remote->requires;
-        //  $res->author = $remote->author;
-        //  $res->author_profile = $remote->author_profile;
-        //  $res->download_link = $remote->download_url;
-        //  $res->trunk = $remote->download_url;
-        //  $res->requires_php = $remote->requires_php;
-        //  $res->last_updated = $remote->last_updated;
+        $git_version = ltrim($remote->tag_name, 'v');
 
         $res->name = 'Dockline Suite';
         $res->slug = 'dockline-suite';
-        $res->version = $version;
+        $res->version = $git_version;
         $res->tested = '5.8';
         $res->requires = '3.0';
-        $res->author = $remote['author']['login'];
-        $res->author_profile = $remote['author']['html_url'];
-        $res->download_link = $remote['assets'][0]['browser_download_url'];
-        $res->trunk = $remote['assets'][0]['browser_download_url'];
+        $res->author = $remote->author->login;
+        $res->author_profile = $remote->author->html_url;
+        $res->download_link = $remote->assets[0]->browser_download_url;
+        $res->trunk = $remote->assets[0]->browser_download_url;
         $res->requires_php = '5.3';
-        $res->last_updated = $remote['published_at'];
+        $res->last_updated = $remote->published_at;
 
         $res->sections = array(
-            'description' => $remote['body'],
-            'changelog' => $remote['body']
+            'description' => $remote->body,
+            'changelog' => $remote->body
         );
 
         if (!empty($remote->banners)) {
             $res->banners = array(
-                'low' => $remote['banners']['low'],
-                'high' => $remote['banners']['high']
+                'low' => $remote->banners->low,
+                'high' => $remote->banners->high
             );
         }
 
@@ -128,19 +116,20 @@ class Dockline_Suite_GitHub_Updater
         }
 
         $remote = $this->request();
+        $git_version = ltrim($remote->tag_name, 'v');
 
         if (
             $remote
-            && version_compare($this->version, $remote->version, '<')
+            && version_compare($this->version, $git_version, '<')
             && version_compare($remote->requires, get_bloginfo('version'), '<')
             && version_compare($remote->requires_php, PHP_VERSION, '<')
         ) {
             $res = new stdClass();
             $res->slug = $this->plugin_name;
             $res->plugin = dirname(plugin_basename(__DIR__)) . '/' . $this->plugin_name . '.php'; // misha-update-plugin/misha-update-plugin.php
-            $res->new_version = $remote->version;
-            $res->tested = $remote->tested;
-            $res->package = $remote->download_url;
+            $res->new_version = $git_version;
+            $res->tested = '5.8';
+            $res->package = $remote->assets[0]->browser_download_url;
 
             $transient->response[$res->plugin] = $res;
         }

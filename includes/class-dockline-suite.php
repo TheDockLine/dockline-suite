@@ -125,6 +125,11 @@ class Dockline_Suite
 		 */
 		require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-dockline-suite-public.php';
 
+		/**
+		 * The class responsible for defining all actions that occur in the updater
+		 */
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-dockline-suite-github-updater.php';
+
 		$this->loader = new Dockline_Suite_Loader();
 	}
 
