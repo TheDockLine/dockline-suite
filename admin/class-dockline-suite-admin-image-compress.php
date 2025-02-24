@@ -58,11 +58,18 @@ class Dockline_Suite_Admin_Image_Compress
             error_log('Dockline Suite: Failed to read image file: ' . $file['file']);
             return $file;
         }
+
+        if (get_option('dockline_image_compress_output_size') === '') {
+            $output_size = '';
+        } else {
+            $output_size = ' -size ' . intval(get_option('dockline_image_compress_output_size')) * 1000;
+        }
+
         // Make API request using raw binary data
         $response = wp_remote_post($api_url, array(
             'headers' => array(
                 'Content-Type' => 'multipart/form-data',
-                'X-Options' => '-q ' . get_option('dockline_image_compress_level') . (get_option('dockline_image_compress_output_size') === '' ? '' : ' -size ' . get_option('dockline_image_compress_output_size') . 'k')
+                'X-Options' => '-q ' . get_option('dockline_image_compress_level') . $output_size
             ),
             'body' => $image_data,
             'timeout' => 120
