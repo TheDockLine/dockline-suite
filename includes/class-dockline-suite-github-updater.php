@@ -22,6 +22,9 @@ class Dockline_Suite_GitHub_Updater
         $this->plugin_name = $plugin_name;
         $this->cache_key = 'dockline_suite';
         $this->cache_allowed = true;
+
+        // Hook into the upgrader process complete action
+        add_action('upgrader_process_complete', array($this, 'on_plugin_update'), 10, 2);
     }
 
     public function request()
@@ -84,26 +87,25 @@ class Dockline_Suite_GitHub_Updater
         $res->name = 'Dockline Suite';
         $res->slug = 'dockline-suite';
         $res->version = $git_version;
-        $res->tested = '5.8';
-        $res->requires = '3.0';
-        $res->author = $remote->author->login;
-        $res->author_profile = $remote->author->html_url;
+        $res->tested = '6.7.2';
+        $res->requires = '6.0';
+        $res->author = 'Levi Mardis';
+        $res->author_profile = 'https://thedockline.com';
         $res->download_link = $remote->assets[0]->browser_download_url;
         $res->trunk = $remote->assets[0]->browser_download_url;
-        $res->requires_php = '5.3';
+        $res->requires_php = '6.0';
         $res->last_updated = $remote->published_at;
 
         $res->sections = array(
-            'description' => $remote->body,
+            'description' => 'This plugin is a suite of tools for Dockline websites.',
             'changelog' => $remote->body
         );
 
-        if (!empty($remote->banners)) {
-            $res->banners = array(
-                'low' => $remote->banners->low,
-                'high' => $remote->banners->high
-            );
-        }
+
+        $res->banners = array(
+            'low' => 'https://www.thedockline.com/wp-content/uploads/2025/02/update-image.jpg',
+            'high' => 'https://www.thedockline.com/wp-content/uploads/2025/02/update-image.jpg'
+        );
 
         return $res;
     }
@@ -126,7 +128,7 @@ class Dockline_Suite_GitHub_Updater
         ) {
             $res = new stdClass();
             $res->slug = $this->plugin_name;
-            $res->plugin = dirname(plugin_basename(__DIR__)) . '/' . $this->plugin_name . '.php'; // misha-update-plugin/misha-update-plugin.php
+            $res->plugin = dirname(plugin_basename(__DIR__)) . '/' . $this->plugin_name . '.php';
             $res->new_version = $git_version;
             $res->tested = '5.8';
             $res->package = $remote->assets[0]->browser_download_url;
@@ -137,16 +139,27 @@ class Dockline_Suite_GitHub_Updater
         return $transient;
     }
 
-    public function purge()
+    /**
+     * Callback function for when a plugin is updated.
+     *
+     * @since 1.0.2
+     * 
+     * @param object $upgrader_object The upgrader object.
+     * @param array $options The options passed to the upgrader.
+     */
+    public function on_plugin_update($upgrader_object, $options)
     {
+        // Check if the updated item is a plugin
+        if ($options['action'] === 'update' && $options['type'] === 'plugin') {
+            // Get the list of updated plugins
+            $updated_plugins = $options['plugins'];
 
-        if (
-            $this->cache_allowed
-            && 'update' === $options['action']
-            && 'plugin' === $options['type']
-        ) {
-            // just clean the cache when new plugin version is installed
-            delete_transient($this->cache_key);
+            // Check if the Dockline Suite plugin is in the updated plugins list
+            if (in_array('dockline-suite/dockline-suite.php', $updated_plugins)) {
+                // Perform actions specific to the Dockline Suite plugin update
+                error_log('Dockline Suite plugin has been updated. Clearing cache or performing other actions.');
+                delete_transient($this->cache_key); // Example action: clear cache
+            }
         }
     }
 }

@@ -92,6 +92,7 @@ class Dockline_Suite
 	 * - Dockline_Suite_i18n. Defines internationalization functionality.
 	 * - Dockline_Suite_Admin. Defines all hooks for the admin area.
 	 * - Dockline_Suite_Public. Defines all hooks for the public side of the site.
+	 * - Dockline_Suite_Admin_Image_Compress. Handles image compression functionality.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
@@ -162,8 +163,12 @@ class Dockline_Suite
 
 		$plugin_admin = new Dockline_Suite_Admin($this->get_plugin_name(), $this->get_version());
 
+		$this->loader->add_action('admin_menu', $plugin_admin, 'add_plugin_admin_menu');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
+
+		$this->loader->add_action('admin_init', $plugin_admin, 'register_image_compress_settings');
+		$this->loader->add_action('admin_init', $plugin_admin, 'register_betheme_overrides_settings');
 	}
 
 	/**
@@ -195,7 +200,7 @@ class Dockline_Suite
 
 		$this->loader->add_filter('plugins_api', $plugin_updater, 'info', 20, 3);
 		$this->loader->add_filter('site_transient_update_plugins', $plugin_updater, 'update');
-		$this->loader->add_action('upgrader_process_complete', $plugin_updater, 'purge', 10, 2);
+		$this->loader->add_action('upgrader_process_complete', $plugin_updater, 'on_plugin_update', 10, 2);
 	}
 
 	/**

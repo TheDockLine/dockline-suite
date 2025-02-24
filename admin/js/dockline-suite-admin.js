@@ -1,5 +1,10 @@
-(function( $ ) {
-	'use strict';
+(function ($) {
+	"use strict";
+	$(document).ready(function () {
+		$('input[name="dockline_image_compress_level"]').on("input", function () {
+			$(".level-value").text($(this).val());
+		});
+	});
 
 	/**
 	 * All of the code for your admin-facing JavaScript source
@@ -28,5 +33,4 @@
 	 * Although scripts in the WordPress core, Plugins and Themes may be
 	 * practising this, we should strive to set a better example in our own work.
 	 */
-
-})( jQuery );
+})(jQuery);
